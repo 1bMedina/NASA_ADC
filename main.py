@@ -74,7 +74,7 @@ def main():
         # Create a camera and set it up
         perspective_camera = PerspectiveCamera()
         perspective_camera.position = (0, 0, -5)
-        perspective_camera.look_at(mesh)
+        perspective_camera.look_at(lunar_mesh)
 
         # Create a light source
         light = DirectionalLight()
@@ -87,7 +87,7 @@ def main():
         lunar_mesh.entity.model.generate_normals()  # Generate normals for shading
 
         # Set up the 3D scene
-        scene.add(mesh.entity)
+        scene.add(lunar_mesh.entity)
         scene.add(camera)
         scene.add(light)
 
