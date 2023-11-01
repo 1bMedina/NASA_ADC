@@ -1,8 +1,9 @@
-import pyvista as pv
+import matplotlib.pyplot as plt
 import numpy as np
 import math
 from datahandler import DataHandler
-
+from ursina import *
+from matplotlib import cm
 from rich.console import Console
 import inquirer
 from multiprocessing import Pool
@@ -39,7 +40,7 @@ def main():
         with Pool(processes=4) as pool:
             height, latitude, longitude, slope = pool.map(DataHandler.process_csv, DataHandler.REGIONS[location])
 
-        dimensions = latitude.shape
+        dimensions = height.shape
 
         status.update("[bold blue]Generating Vertices")
 
@@ -64,28 +65,35 @@ def main():
 
         faces = triangulate(dimensions[1], dimensions[0])
 
-        surface = pv.PolyData(points, faces)
+        # Create a list of vertices from your x, y, and z data
+        vertices = [Vec3(x[i], y[i], z[i]) for i in range(len(x))]
 
-        status.update("[bold blue]Smoothing Faces")
+        # Create a mesh using your data
+        lunar_mesh = Mesh(vertices=vertices, triangles=faces, mode='triangles')
 
-        surface = surface.smooth_taubin(n_iter=500, pass_band=0.05)
+        # Create a camera and set it up
+        perspective_camera = PerspectiveCamera()
+        perspective_camera.position = (0, 0, -5)
+        perspective_camera.look_at(mesh)
 
-        status.update("[bold blue]Setting up Plot")
+        # Create a light source
+        light = DirectionalLight()
+        light.rotation = (45, 45, 0)
+        light.color = color.white
 
-        plotter = pv.Plotter()
-        plotter.add_camera_orientation_widget()
-        plotter.set_background("black")
+        # Add the mesh to the scene
+        lunar_mesh.entity.shader.flat_shading = True  # Flat shading for the mesh
+        lunar_mesh.entity.model.color = color.white  # Color of the mesh
+        lunar_mesh.entity.model.generate_normals()  # Generate normals for shading
 
-        pv.default_theme.full_screen = True
-        pv.default_theme.interpolate_before_map = True
+        # Set up the 3D scene
+        scene.add(mesh.entity)
+        scene.add(camera)
+        scene.add(light)
 
-        plotter.add_mesh(surface, scalars=slope, scalar_bar_args={"color": "white"})
-
-        status.stop()
-        console.log("[bold blue]Plot Initialized")
-
-        _ = plotter.show()
+        # Run the app
+        app.run()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
