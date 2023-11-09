@@ -5,13 +5,8 @@ from datahandler import DataHandler
 from ursina import *
 from matplotlib import cm
 
-import inquirer
-from multiprocessing import Pool
-
-
-
 def main():
-    l
+    app = Ursina()
 
 
 if __name__ == '__main__':
