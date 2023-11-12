@@ -1,13 +1,22 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import math
-from datahandler import DataHandler
 from ursina import *
-from matplotlib import cm
 
 def main():
     app = Ursina()
 
+    moon = Entity(model=Terrain("./hm.png"))
+
+    moon.color = color.white  # Color of the mesh
+
+    print('Setting up lighting')
+
+    # Create a light source
+    light = DirectionalLight()
+    light.rotation = (45, 45, 0)
+    light.color = color.white
+    
+    EditorCamera()
+
+    app.run()
 
 if __name__ == '__main__':
     main()
