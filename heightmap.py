@@ -29,13 +29,9 @@ print(min(y), max(y), max(y) - min(y))
 print(z.min(), z.max())
 
 z -= z.min()
-
 z /= z.max() - z.min()
-
 z *= 255
-
 z = np.uint8(z)
-
 z = z.reshape(dimensions)
 
 print(z)
