@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from PIL import Image as im
+from PIL import Image
 import math
 
 def normalize(num):
@@ -12,6 +12,8 @@ longitude = np.array(pd.read_csv("data/FY23_ADC_Longitude_PeakNearShackleton.csv
 slope = np.array(pd.read_csv("data/FY23_ADC_Slope_PeakNearShackleton.csv"))
 
 dimensions = height.shape
+
+print(dimensions)
 
 height = height.flatten()
 latitude = latitude.flatten()
@@ -38,8 +40,10 @@ print(z)
 
 print("Generating image")
 
-hm = im.fromarray(z)
+heightmap = Image.fromarray(z)
 
-hm.verify()
+heightmap = heightmap.resize((16385, 16385), resample=Image.Resampling.BICUBIC)
 
-hm.save('./hm.png')
+heightmap.verify()
+
+heightmap.save('./heightmap.png')
