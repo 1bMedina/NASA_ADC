@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
 from PIL import Image
-import math
 import json
+from math import sin, cos, sqrt, radians, atan2, asin
+
 
 data = {}
 
@@ -21,56 +22,116 @@ latitude = latitude.flatten()
 longitude = longitude.flatten()
 
 # Convert to cartesian coordinates
-x = list(
-    map(
-        lambda n: (n[1] + 1737400)
-        * math.cos(math.radians(latitude[n[0]]))
-        * math.cos(math.radians(longitude[n[0]])),
-        enumerate(height),
+x = np.array(
+    list(
+        map(
+            lambda h: 
+            (h[1] + 1737400)
+            * cos(radians(latitude[h[0]]))
+            * cos(radians(longitude[h[0]])),
+            enumerate(height),
+        )
     )
 )
-y = list(
-    map(
-        lambda n: (n[1] + 1737400)
-        * math.cos(math.radians(latitude[n[0]]))
-        * math.sin(math.radians(longitude[n[0]])),
-        enumerate(height),
+y = np.array(
+    list(
+        map(
+            lambda h: (h[1] + 1737400)
+            * cos(radians(latitude[h[0]]))
+            * sin(radians(longitude[h[0]])),
+            enumerate(height),
+        )
     )
 )
 z = np.array(
     list(
         map(
-            lambda n: (n[1] + 1737400) * math.sin(math.radians(latitude[n[0]])),
+            lambda h: (h[1] + 1_737_400) * sin(radians(latitude[h[0]])),
             enumerate(height),
         )
     )
 )
 
-print(min(x), max(x), max(x) - min(x))
-print(min(y), max(y), max(y) - min(y))
-print(z.min(), z.max())
+azimuth = np.array(
+    list(
+        map(
+            lambda h: (atan2(
+                sin(radians(-h[1])),
+                -sin(radians(latitude[h[0]])) * cos(-radians(h[0]))
+                )
+            ),
+            enumerate(longitude)
+        )
+    )
+)
+
+elav_angle = np.array(
+    list(
+        map( # Refrence coords are (1,737,400, 0, 0)
+            lambda h: (
+                asin(
+                    (h[0] - 1_737_400)
+                    / sqrt(
+                        (h[0] - 1_737_400) ** 2
+                        + h[1] ** 2
+                        + h[2] ** 2
+                    )
+                )
+            ),
+            zip(x, y, z)
+        )
+    )
+)
+
+data["x_scale"] = (max(x) - min(x))
+data["y_scale"] = (max(y) - min(y))
+data["z_scale"] = (max(z) - min(z))
 
 # Normalize Z data
 z *= -1
 z -= z.min()
-z /= z.max() - z.min()
+z /= z.max()
 z *= 255
 z = np.uint8(z)
 z = z.reshape(dimensions)
 
+slope -= slope.min()
+slope /= slope.max()
+slope *= 255
+slope = np.uint8(slope)
+slope = slope.reshape(dimensions)
+
+azimuth -= azimuth.min()
+azimuth /= azimuth.max()
+azimuth *= 255
+azimuth = np.uint8(azimuth)
+azimuth = azimuth.reshape(dimensions)
+
+elav_angle -= elav_angle.min()
+elav_angle /= elav_angle.max()
+elav_angle *= 255
+elav_angle = np.uint8(elav_angle)
+elav_angle = elav_angle.reshape(dimensions)
+
 heightmap = Image.fromarray(z)
 slope = Image.fromarray(slope)
+azimuth = Image.fromarray(azimuth)
+elav_angle = Image.fromarray(elav_angle)
 
-elevation = heightmap.resize((16385, 16385), resample=Image.Resampling.BICUBIC)
+elevation = heightmap.resize((6400, 6400), resample=Image.Resampling.BICUBIC)
 heightmap.thumbnail((511, 511), Image.Resampling.LANCZOS)
 
 slope.verify
 heightmap.verify()
 elevation.verify()
+azimuth.verify()
+elav_angle.verify()
 
 slope.save("./textures/slope.png")
-elevation.save("./textures/elevation.png")
+elevation.save("./textures/height.png")
 heightmap.save("./textures/heightmap.png")
+azimuth.save("./textures/azimuth.png")
+elav_angle.save("./textures/elevation.png")
 
-with open("data.json", "w") as file:
+with open("./textures/data.json", "w") as file:
     json.dump(data, file)
